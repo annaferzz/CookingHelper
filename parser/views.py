@@ -4,6 +4,7 @@ from functools import reduce
 from multiprocessing import Pool
 from tqdm import tqdm
 
+
 def parse_recipes(request):
     n_workers = 4
     pages_range = get_pages_range()

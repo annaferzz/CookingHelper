@@ -9,7 +9,7 @@ def get_soup(url):
     return bs4.BeautifulSoup(req.text, 'lxml')
 
 
-def get_recipe_urls_from_page(url, max_recipes=500):
+def get_recipe_urls_from_page(url, max_recipes=1000):
     soup = get_soup(url)
     content_div = soup.find('div', 'content-md')
     pages_url = [
@@ -21,26 +21,39 @@ def get_recipe_urls_from_page(url, max_recipes=500):
     return pages_url
 
 
-
 def get_recipe_from_page(url):
     soup = get_soup(url)
     recipe_name = soup.find('h1').get_text().strip()
 
     if recipe_name == 'Страница не найдена':
-        return {'url': url, 'name': recipe_name, 'ingredients': {}, 'description': '', 'instruction': '', 'image_url': ''}
+        return {'url': url, 'name': recipe_name, 'ingredients': {},
+                'description': '', 'instruction': '', 'image_url': ''}
 
-    ingredients_tags = soup.findAll('span', itemprop='ingredient')
+    ingredients_tags = soup.find('div', class_='ingredients-bl').find_all('li') if soup.find('div',
+                                                                                             class_='ingredients-bl')\
+        else []
     ingredients_dict = {}
     for ingredient in ingredients_tags:
-        name = ingredient.find('span', itemprop='name').get_text().strip()
-        amount = ingredient.find('span', itemprop='amount')
-        amount = amount.get_text().strip() if amount else ''
-        ingredients_dict[name] = amount
+        name_tag = ingredient.find('a')
+        name = name_tag.get_text(strip=True) if name_tag else ''
 
-    description = soup.find('div', {'class': 'recipe-description'}).get_text().strip() if soup.find('div', {'class': 'recipe-description'}) else ''
-    instruction = soup.find('div', {'class': 'instruction'}).get_text().strip() if soup.find('div', {'class': 'instruction'}) else ''
+        amount_tag = ingredient.find_all('span')[-1] if ingredient.find_all('span') else None
+        amount = amount_tag.get_text(strip=True) if amount_tag else ''
+
+        if name:
+            ingredients_dict[name] = amount
+
+    description = soup.find('div', class_='article-text').get_text().strip() if soup.find('div',
+                                                                                          class_='article-text') else ''
+    instruction = ''
+    instructions_block = soup.find('ul', itemprop='recipeInstructions')
+    if instructions_block:
+        instruction = "\n".join([li.get_text(strip=True) for li in instructions_block.find_all('li')])
     image_tag = soup.find('img', {'itemprop': 'image'})
     image_url = image_tag['src'] if image_tag else ''
+
+    if not recipe_name or not ingredients_dict or not instruction:
+        return None
 
     return {
         'url': url,
@@ -52,7 +65,7 @@ def get_recipe_from_page(url):
     }
 
 
-def get_pages_range(max_pages=10):
+def get_pages_range(max_pages=50):
     main_url = 'https://www.povarenok.ru/recipes/~1/'
     soup = get_soup(main_url)
 
@@ -67,12 +80,13 @@ def get_pages_range(max_pages=10):
     return [f'https://www.povarenok.ru/recipes/~{i}/' for i in range(1, pages_count + 1)]
 
 
-
 def save_to_csv(data, file_path='recipes.csv'):
     with open(file_path, mode='w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
         writer.writerow(['Name', 'URL', 'Ingredients', 'Description', 'Instruction', 'Image URL'])
         for recipe in data:
+            if not recipe or not recipe['name'] or not recipe['ingredients'] or not recipe['instruction']:
+                continue
             writer.writerow([
                 recipe['name'],
                 recipe['url'],
