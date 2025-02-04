@@ -14,7 +14,9 @@
         
         <fieldset>
             <legend>Рецепт</legend>
-            {{ recipe_form.as_p }}
+            <div class="recipe">
+                {{ recipe_form.as_p }}
+            </div>
         </fieldset>
         
         <fieldset id="ingredients-fieldset">
@@ -47,7 +49,7 @@
             newForm.innerHTML = newForm.innerHTML.replace(formRegex, `form-${formNum}-`)
             ingredientsFieldset.insertBefore(newForm, addButton)
             totalForms.setAttribute('value', `${formNum + 1}`)
-            } 
+        } 
         </script>
 </body>
 </html>
