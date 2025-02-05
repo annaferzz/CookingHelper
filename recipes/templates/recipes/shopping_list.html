@@ -29,14 +29,12 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for recipe_name, recipe_data in recipes %}
-                        {% for ingredient in recipe_data.ingredients %}
-                            <tr>
-                                <td>{{ ingredient.name }}</td>
-                                <td>{{ ingredient.quantity }}</td>
-                                <td>{{ ingredient.unit }}</td>
-                            </tr>
-                        {% endfor %}
+                    {% for ingredient in all_ingredients %}
+                        <tr>
+                            <td>{{ ingredient.name }}</td>
+                            <td>{{ ingredient.quantity }}</td>
+                            <td>{{ ingredient.unit }}</td>
+                        </tr>
                     {% endfor %}
                 </tbody>
             </table>
