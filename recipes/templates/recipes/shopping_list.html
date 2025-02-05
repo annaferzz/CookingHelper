@@ -42,6 +42,10 @@
             </table>
         </div>
     </div>
+    <form method="POST" action="{% url 'clear_shopping_cart' %}">
+        {% csrf_token %}
+        <button type="submit" class="clear-button">Очистить список покупок</button>
+    </form>
     <div class="main">
         <a href="{% url 'page_recipes' %}">Назад к рецептам</a>
     </div>

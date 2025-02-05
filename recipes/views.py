@@ -123,3 +123,10 @@ def shopping_list(request):
     
     return render(request, 'recipes/shopping_list.html', {'user': user, 'recipes': recipes_dict.items()})
 
+def clear_shopping_cart(request):
+    if request.method == 'POST':
+        user = request.user
+        if user.is_authenticated:
+            ShoppingCart.objects.filter(user_id=user.id).delete()
+        return redirect('shopping_list')
+

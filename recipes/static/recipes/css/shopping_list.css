@@ -85,3 +85,16 @@ tr:hover {
     background: #ff9466;
 }
 
+.clear-button {
+    background-color: #ff6f31;
+    color: #fff;
+    padding: 15px 15px; 
+    border: none; 
+    border-radius: 5px; 
+    margin-left: 30px; 
+    font-size: 1rem;
+}
+
+.clear-button:hover {
+    background-color: #ff9466;
+}
