@@ -1,0 +1,87 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #1a1a1a;
+    color: white; 
+}
+
+.container {
+    display: flex;
+    justify-content: space-between; 
+    padding: 20px;
+}
+
+
+.recipes, .ingredients {
+    flex: 1; 
+    margin: 10px; 
+    background-color: rgba(72, 72, 72, 0.578);
+    padding: 20px; 
+    border-radius: 8px; 
+    text-align: center; 
+    box-shadow: 3px 2px 7px rgba(0, 0, 0, 0.5);
+}
+
+h1 {
+    color: #ff6f31;
+    font-size: 2.4rem;
+}
+h2
+{
+    font-size: 1.3rem;
+}
+
+.recipe img {
+    max-width: 360px; 
+    height: auto; 
+    border-radius: 4px;
+}
+
+.recipe img:hover {
+    max-width: 380px; 
+    box-shadow: 3px 2px 7px rgba(0, 0, 0, 0.5);
+}
+
+table {
+    width: 100%; 
+    border-collapse: collapse; 
+    margin: 20px 0; 
+}
+
+th, td {
+    padding: 10px; 
+    border: 1px solid #ff6f31; 
+}
+
+th {
+    background-color: #ff6f3199; 
+}
+
+td {
+    text-align: left;
+}
+
+td:nth-child(n+2) { 
+    text-align: center; 
+}
+
+tr:hover {
+    background-color: rgba(0, 0, 0, 0.282); 
+}
+
+.main {
+    margin: 30px; 
+}
+.main a {
+    padding: 15px 20px;
+    background: #ff6f31;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
+.main a:hover {
+    background: #ff9466;
+}
+
