@@ -219,6 +219,10 @@
                 </ul>
             </div>
         </div>
+        <form method="post" action="{% url 'shopping' recipe.id %}">
+            {% csrf_token %}
+            <button type="submit" class="back-button">Добавить рецепт в корзину</button>
+        </form>
         <a href="{% url 'page_recipes' %}" class="back-button">Назад к рецептам</a>
     </div>
 

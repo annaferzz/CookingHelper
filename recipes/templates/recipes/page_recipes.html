@@ -153,6 +153,8 @@
 <body>
     <div class="auth-buttons">
         {% if user.is_authenticated %}
+            <a href="{% url 'shopping_list' %}">Список продуктов</a>
+            <a href="{% url 'create_recipes' %}">Добавить рецепт</a>
             <a href="{% url 'logout' %}">Выход</a>
         {% else %}
             <a href="{% url 'register' %}">Регистрация</a>
