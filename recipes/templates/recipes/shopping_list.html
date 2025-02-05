@@ -1,0 +1,53 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список продуктов</title>
+    <link rel="stylesheet" href="{% static 'recipes/css/shopping_list.css' %}">
+</head>
+<body>
+    <div class="container">
+        <div class="recipes">
+            <h1>Рецепты</h1>
+            {% for recipe_name, recipe_data in recipes %}
+                <div class="recipe">
+                    <h2>{{ recipe_name }}</h2>
+                    <img src="{{ recipe_data.image_url }}" alt="{{ recipe_name }}">
+                </div>
+            {% endfor %}
+        </div>
+        <div class="ingredients">
+            <h1>Список продуктов</h1>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ингредиент</th>
+                        <th>Количество</th>
+                        <th>Единица измерения</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for recipe_name, recipe_data in recipes %}
+                        {% for ingredient in recipe_data.ingredients %}
+                            <tr>
+                                <td>{{ ingredient.name }}</td>
+                                <td>{{ ingredient.quantity }}</td>
+                                <td>{{ ingredient.unit }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <form method="POST" action="{% url 'clear_shopping_cart' %}">
+        {% csrf_token %}
+        <button type="submit" class="clear-button">Очистить список покупок</button>
+    </form>
+    <div class="main">
+        <a href="{% url 'page_recipes' %}">Назад к рецептам</a>
+    </div>
+</body>
+</html>
