@@ -115,3 +115,10 @@ class AccountsViewsTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, reverse('page_recipes'))
+
+    def test_logout_without_login(self):
+        """Попытка выхода без входа"""
+        url = reverse('logout')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('page_recipes'))
