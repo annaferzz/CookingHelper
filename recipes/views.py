@@ -65,47 +65,49 @@ def one_num(x):
 
 def shopping(request, recipe_id):
     user = request.user
-    if not user.is_authenticated:
-        return redirect('login')
+
     if request.method == 'POST':
-        recipe = get_object_or_404(Recipe, id=recipe_id)
+        
         ingredients = Ingredient.objects.filter(recipe_id=recipe_id)
 
         for ingredient in ingredients:
-            cart_item, created = ShoppingCart.objects.get_or_create(
-                user_id=user,  
-                ingredient_id=ingredient,
-                defaults={
-                    'quantity': ingredient.quantity,
-                    'unit': ingredient.unit,
-                }
-            )
+        
+            cart_item = ShoppingCart.objects.filter(
+                user_id=user,
+                ingredient_id__name=ingredient.name,  
+                unit=ingredient.unit  
+            ).first()
 
-            if not created:
-                cart_item_quantity = one_num(cart_item.quantity)
-                ingredient_quantity = one_num(ingredient.quantity)
-
-                if cart_item.unit == ingredient.unit:
-                    cart_item_quantity = in_decimal(cart_item_quantity)
-                    ingredient_quantity = in_decimal(ingredient_quantity)
-
+            if cart_item:
+                    cart_item_quantity = in_decimal(cart_item.quantity)
+                    ingredient_quantity = in_decimal(ingredient.quantity) 
+                    cart_item_quantity = one_num(cart_item_quantity)
+                    ingredient_quantity = one_num(ingredient_quantity)
+                    
                     cart_item.quantity = str(float(cart_item_quantity) + float(ingredient_quantity))
-
-                else:
-                    cart_item.quantity += f" + {ingredient.quantity} {ingredient.unit}"
-                cart_item.save()
+                    cart_item.save()
+            else:
+                
+                ShoppingCart.objects.create(
+                    user_id=user,
+                    ingredient_id=ingredient,  
+                    quantity=ingredient.quantity,
+                    unit=ingredient.unit
+                )
 
         return redirect('page_recipes')
     
     
 def shopping_list(request):
-    user = request.user.id 
-    shopping_items = ShoppingCart.objects.filter(user_id=user) 
+    user = request.user.id
+    shopping_items = ShoppingCart.objects.filter(user_id=user)
 
     recipes_dict = {}
 
-    for item in shopping_items:
+    # Создаем список всех ингредиентов
+    all_ingredients = []
 
+    for item in shopping_items:
         recipe_name = item.ingredient_id.recipe_id.name
         recipe_image = item.ingredient_id.recipe_id.image_url
 
@@ -115,13 +117,26 @@ def shopping_list(request):
                 'ingredients': []
             }
 
-        recipes_dict[recipe_name]['ingredients'].append({
+        ingredient_data = {
+            'name': item.ingredient_id.name,
             'quantity': item.quantity,
             'unit': item.unit,
-            'name': item.ingredient_id.name
-        })
-    
-    return render(request, 'recipes/shopping_list.html', {'user': user, 'recipes': recipes_dict.items()})
+            'recipe_name': recipe_name  
+        }
+
+        recipes_dict[recipe_name]['ingredients'].append(ingredient_data)
+        all_ingredients.append(ingredient_data)
+
+    for recipe_data in recipes_dict.values():
+        recipe_data['ingredients'].sort(key=lambda x: x['name'])
+
+    all_ingredients.sort(key=lambda x: x['name'])
+
+    return render(request, 'recipes/shopping_list.html', {
+        'user': user,
+        'recipes': recipes_dict.items(),  
+        'all_ingredients': all_ingredients  
+    })
 
 def clear_shopping_cart(request):
     if request.method == 'POST':
