@@ -15,6 +15,10 @@
                 <div class="recipe">
                     <h2>{{ recipe_name }}</h2>
                     <img src="{{ recipe_data.image_url }}" alt="{{ recipe_name }}">
+                    <form method="POST" action="{% url 'clear_one_shopping_cart' recipe_data.recipe_id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="clear-one-button">Удалить этот рецепт</button>
+                    </form>
                 </div>
             {% endfor %}
         </div>

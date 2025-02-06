@@ -98,3 +98,16 @@ tr:hover {
 .clear-button:hover {
     background-color: #ff9466;
 }
+
+.clear-one-button {
+    color: #fff;
+    padding: 5px 10px; 
+    border: none; 
+    border-radius: 5px; 
+    background-color: #db9a7e;
+    margin-top: 1%;
+}
+
+.clear-one-button:hover {
+    background-color: #ff8956;
+}

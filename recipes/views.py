@@ -66,7 +66,9 @@ def one_num(x):
 
 def shopping(request, recipe_id):
     user = request.user
-
+    if not user.is_authenticated:
+        return redirect('login')
+    
     if request.method == 'POST':
         
         ingredients = Ingredient.objects.filter(recipe_id=recipe_id)
@@ -104,8 +106,6 @@ def shopping_list(request):
     shopping_items = ShoppingCart.objects.filter(user_id=user)
 
     recipes_dict = {}
-
-    # Создаем список всех ингредиентов
     all_ingredients = []
 
     for item in shopping_items:
@@ -115,14 +115,16 @@ def shopping_list(request):
         if recipe_name not in recipes_dict:
             recipes_dict[recipe_name] = {
                 'image_url': recipe_image,
-                'ingredients': []
+                'ingredients': [],
+                'recipe_id': item.ingredient_id.recipe_id.id,
             }
 
         ingredient_data = {
             'name': item.ingredient_id.name,
             'quantity': item.quantity,
             'unit': item.unit,
-            'recipe_name': recipe_name  
+            'recipe_name': recipe_name,
+            'recipe_id': item.ingredient_id.recipe_id.id,
         }
 
         recipes_dict[recipe_name]['ingredients'].append(ingredient_data)
@@ -146,3 +148,12 @@ def clear_shopping_cart(request):
             ShoppingCart.objects.filter(user_id=user.id).delete()
         return redirect('shopping_list')
 
+def clear_one_shopping_cart(request, recipe_id):
+    if request.method == 'POST':
+        user = request.user
+        if user.is_authenticated:
+        
+            ingredients = Ingredient.objects.filter(recipe_id=recipe_id)
+            # удалим все записи в корзине, которые ссылаются на эти ингредиенты
+            ShoppingCart.objects.filter(user_id=user.id, ingredient_id__in=ingredients).delete()
+        return redirect('shopping_list')
