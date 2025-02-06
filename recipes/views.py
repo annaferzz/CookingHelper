@@ -30,7 +30,8 @@ def create_recipes(request):
 
 
 def page_recipes(request):
-    recipes_list = Recipe.objects.order_by('name')
+    query = request.GET.get('q', '')
+    recipes_list = Recipe.objects.filter(name__icontains=query).order_by('name') if query else Recipe.objects.order_by('name')
     paginator = Paginator(recipes_list, 12)
     page_number = request.GET.get('page')
     recipes = paginator.get_page(page_number)
