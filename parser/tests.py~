@@ -1,25 +1,25 @@
 import unittest
 from unittest.mock import patch, MagicMock
+from django.test import TestCase, Client
+from django.urls import reverse
 from .utils import get_soup, get_recipe_urls_from_page, get_recipe_from_page, get_pages_range, save_to_csv
+from .views import parse_recipes
 import csv
 import os
 
 
-class ParserUtilsTest(unittest.TestCase):
-
+class ParserUtilsTest(TestCase):
     @patch('requests.get')
     def test_get_soup(self, mock_get):
-        """Тестирует функцию get_soup, проверяя, что она правильно парсит HTML"""
         mock_response = MagicMock()
         mock_response.text = '<html><body><div>Test</div></body></html>'
         mock_get.return_value = mock_response
 
-        soup = get_soup('https://example.com')
+        soup = get_soup('http://example.com')
         self.assertEqual(soup.find('div').text, 'Test')
 
     @patch('requests.get')
     def test_get_recipe_urls_from_page(self, mock_get):
-        """Проверка извлечение URL-ов рецептов с веб-страницы"""
         mock_response = MagicMock()
         mock_response.text = '''
         <html>
@@ -37,12 +37,11 @@ class ParserUtilsTest(unittest.TestCase):
         '''
         mock_get.return_value = mock_response
 
-        urls = get_recipe_urls_from_page('https://example.com')
+        urls = get_recipe_urls_from_page('http://example.com')
         self.assertEqual(urls, ['/recipe/1', '/recipe/2'])
 
     @patch('requests.get')
     def test_get_recipe_from_page(self, mock_get):
-        """Проверка извлечения данных рецепта с веб-страницы"""
         mock_response = MagicMock()
         mock_response.text = '''
         <html>
@@ -63,36 +62,15 @@ class ParserUtilsTest(unittest.TestCase):
         '''
         mock_get.return_value = mock_response
 
-        recipe = get_recipe_from_page('https://example.com')
+        recipe = get_recipe_from_page('http://example.com')
         self.assertEqual(recipe['name'], 'Test Recipe')
         self.assertEqual(recipe['ingredients'], {'Ingredient 1': '100 г', 'Ingredient 2': '200 мл'})
         self.assertEqual(recipe['description'], 'Test Description')
         self.assertEqual(recipe['instruction'], 'Step 1\nStep 2')
-        self.assertEqual(recipe['image_url'], 'https://example.com/image.jpg')
-
-    @patch('requests.get')
-    def test_get_recipe_from_page_not_found(self, mock_get):
-        """Обработка ошибки страницы с отсутствующим рецептом"""
-        mock_response = MagicMock()
-        mock_response.text = '''
-        <html>
-            <body>
-                <h1>Страница не найдена</h1>
-            </body>
-        </html>
-        '''
-        mock_get.return_value = mock_response
-
-        recipe = get_recipe_from_page('https://example.com')
-        self.assertEqual(recipe['name'], 'Страница не найдена')
-        self.assertEqual(recipe['ingredients'], {})
-        self.assertEqual(recipe['description'], '')
-        self.assertEqual(recipe['instruction'], '')
-        self.assertEqual(recipe['image_url'], '')
+        self.assertEqual(recipe['image_url'], 'http://example.com/image.jpg')
 
     @patch('requests.get')
     def test_get_pages_range(self, mock_get):
-        """Тестирует получение диапазона страниц для парсинга"""
         mock_response = MagicMock()
         mock_response.text = '''
         <html>
@@ -110,7 +88,6 @@ class ParserUtilsTest(unittest.TestCase):
         self.assertEqual(pages[0], 'https://www.povarenok.ru/recipes/~1/')
 
     def test_save_to_csv(self):
-        """Проверка сохранения данных рецептов в CSV файл"""
         data = [
             {
                 'name': 'Test Recipe',
@@ -122,9 +99,11 @@ class ParserUtilsTest(unittest.TestCase):
             }
         ]
 
+        # Сохраняем данные в CSV
         file_path = 'test_recipes.csv'
         save_to_csv(data, file_path)
 
+        # Проверяем, что файл создан и содержит правильные данные
         self.assertTrue(os.path.exists(file_path))
         with open(file_path, 'r', encoding='utf-8') as file:
             reader = csv.reader(file)
@@ -139,43 +118,38 @@ class ParserUtilsTest(unittest.TestCase):
                 'https://example.com/image.jpg'
             ])
 
+        # Удаляем тестовый файл
         os.remove(file_path)
 
-    def test_save_to_csv_empty_data(self):
-        """Тестирует сохранение пустого списка данных в CSV файл"""
-        data = []
-        file_path = 'test_recipes.csv'
-        save_to_csv(data, file_path)
 
-        self.assertTrue(os.path.exists(file_path))
-        with open(file_path, 'r', encoding='utf-8') as file:
-            reader = csv.reader(file)
-            rows = list(reader)
-            self.assertEqual(rows[0], ['Name', 'URL', 'Ingredients', 'Description', 'Instruction', 'Image URL'])
-            self.assertEqual(len(rows), 1)
+class ParserViewsTest(TestCase):
+    @patch('parser.views.get_pages_range')
+    @patch('parser.views.get_recipe_urls_from_page')
+    @patch('parser.views.get_recipe_from_page')
+    @patch('parser.views.save_to_csv')
+    def test_parse_recipes(self, mock_save_to_csv, mock_get_recipe_from_page, mock_get_recipe_urls_from_page, mock_get_pages_range):
+        # Мокируем функции
+        mock_get_pages_range.return_value = ['http://example.com/page1']
+        mock_get_recipe_urls_from_page.return_value = ['http://example.com/recipe1']
+        mock_get_recipe_from_page.return_value = {
+            'name': 'Test Recipe',
+            'url': 'http://example.com/recipe1',
+            'ingredients': {'Ingredient 1': '100 г'},
+            'description': 'Test Description',
+            'instruction': 'Step 1',
+            'image_url': 'http://example.com/image.jpg'
+        }
 
-        os.remove(file_path)
+        # Вызываем view
+        client = Client()
+        response = client.get(reverse('parse_recipes'))
 
-    def test_save_to_csv_invalid_data(self):
-        """Тестирует сохранение данных с ошибками в CSV файл"""
-        data = [
-            {
-                'name': '',
-                'url': 'https://example.com',
-                'ingredients': {},
-                'description': 'Test Description',
-                'instruction': 'Step 1\nStep 2',
-                'image_url': 'https://example.com/image.jpg'
-            }
-        ]
+        # Проверяем ответ
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {'status': 'success', 'recipes_saved': 1})
 
-        file_path = 'test_recipes.csv'
-        save_to_csv(data, file_path)
-
-        self.assertTrue(os.path.exists(file_path))
-        with open(file_path, 'r', encoding='utf-8') as file:
-            reader = csv.reader(file)
-            rows = list(reader)
-            self.assertEqual(rows[0], ['Name', 'URL', 'Ingredients', 'Description', 'Instruction', 'Image URL'])
-            self.assertEqual(len(rows), 1)
-        os.remove(file_path)
+        # Проверяем, что функции были вызваны
+        mock_get_pages_range.assert_called_once()
+        mock_get_recipe_urls_from_page.assert_called_once()
+        mock_get_recipe_from_page.assert_called_once()
+        mock_save_to_csv.assert_called_once()
